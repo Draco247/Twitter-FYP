@@ -1,6 +1,8 @@
 import requests
 import tweepy
-from flask import Flask,request
+from flask import Flask,request, jsonify, make_response
+from flask_cors import CORS
+from bs4 import BeautifulSoup
 
 # all the api keys
 api_key = "H2stUS5brlYYEoznyxOPTNctW"
@@ -10,6 +12,8 @@ access_secret = "VYKgAoBPh7bIkvNuMFRI0ixiG97egPe3v7ZyKwXNQgBpG"
 bearer_token='AAAAAAAAAAAAAAAAAAAAANUmhAEAAAAAUeYWyb%2BJ1ulqC9p0SFHVW%2FgOL0c%3DTrvOfpDNEdQ18gFWw2dDnnzb5umsM1h93SmsN2rtBUUv8SXSFQ'
 
 app = Flask(__name__)
+
+CORS(app)
 
 @app.route('/')
 def hello():
@@ -22,21 +26,48 @@ def search():
     # return args
 def perform_search(query):
     client = tweepy.Client(bearer_token=bearer_token)
-    query = "ukraine"
+    # query = "ukraine"
 
-    search = "has:links -has:media "+query
-
-    tweets = client.search_recent_tweets(query=query, tweet_fields=['entities'], max_results=10)
+    links = {}
+    # filter:links -filter:images -filter:videos
+    search = "has:links -has:images -has:videos "+query
+    print(search)
+    tweets = tweepy.Paginator(client.search_recent_tweets, query=query,
+                              tweet_fields=['entities'], max_results=100).flatten(limit=500)
+    # tweets = client.search_recent_tweets(query=search, tweet_fields=['entities'], max_results=100)
 
     urls = []
-    for tweet in tweets.data:
+    for tweet in tweets:
     # print(ascii(tweet.text))
-        if len(tweet.entities) is not None:
+        if tweet.entities is not None:
             if 'urls' in tweet.entities:
                 # print("--------------------------------")
                 # print(tweet.entities['urls'])
-                urls.append(tweet.entities['urls'])
+                # print("--------------------------------")
+                # if 'expanded_url' in tweet.entities['urls']:
+                #     print("gfyfyf
+                if 'twitter' not in tweet.entities['urls'][0]['expanded_url'] and tweet.entities['urls'][0]['expanded_url'] not in urls:
+                    urls.append(tweet.entities['urls'][0]['expanded_url'])
+                    links.update({tweet.entities['urls'][0]['expanded_url']:1})
+                if tweet.entities['urls'][0]['expanded_url'] in urls:
+                    links[tweet.entities['urls'][0]['expanded_url']] += 1
+    
+    print(urls)
+    print("£--------------------------------£")
+    print(links)
     return urls
+# def perform_webcrawl()
+
+# def _build_cors_preflight_response():
+#     response = make_response()
+#     response.headers.add("Access-Control-Allow-Origin", "*")
+#     response.headers.add('Access-Control-Allow-Headers', "*")
+#     response.headers.add('Access-Control-Allow-Methods', "*")
+#     return response
+
+# def _corsify_actual_response(response):
+#     response.headers.add("Access-Control-Allow-Origin", "*")
+#     return response
 
 if __name__ == '__main__':
    app.run(debug = True)
