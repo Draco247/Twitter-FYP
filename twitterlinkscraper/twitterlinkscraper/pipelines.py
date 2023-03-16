@@ -8,7 +8,8 @@
 from itemadapter import ItemAdapter
 import json
 import mysql.connector
-from twitterlinkscraper.twitterlinkscraper.spiders.linkscraper import LinkscraperSpider
+from twitterlinkscraper.spiders.linkscraper import LinkscraperSpider
+# from twitterlinkscraper.twitterlinkscraper.spiders.linkscraper import LinkscraperSpider
 
 # from.spiders.linkscraper import LinkscraperSpider
 from scrapy import signals
@@ -20,6 +21,11 @@ import string
 from nltk.stem import PorterStemmer
 import re
 import json
+from datetime import datetime
+from dateutil.parser import parse
+from spacy.language import Language
+from spacy_langdetect import LanguageDetector
+import spacy
 
 # nltk.download('punkt')
 default_stemmer = PorterStemmer()
@@ -58,8 +64,25 @@ class TwitterlinkscraperPipeline:
     def from_crawler(cls, crawler):
         return cls(crawler.stats)
     
-    def clean_text(self,text):
+    
+    
 
+    def clean_text(self,text):
+        def get_lang_detector(nlp, name):
+            return LanguageDetector()
+        
+        nlp = spacy.load("en_core_web_sm")
+        Language.factory("language_detector", func=get_lang_detector)
+        nlp.add_pipe('language_detector', last=True)
+
+        def detect_lang(text):
+            doc = nlp(text)
+
+            if doc._.language['language'] == 'en':
+                return text
+            else:
+                return "Not English"
+            
         def tokenize_text(text):
             return [w for s in sent_tokenize(text) for w in word_tokenize(s)]
 
@@ -80,7 +103,7 @@ class TwitterlinkscraperPipeline:
             dict = {}
             for i in text.split():
                 # print(f"i is hello: {i}")
-                if i in dict:
+                if i in dict: 
                     dict.update({i: dict[i]+1})
                 else:
                     dict[i] = 1
@@ -94,10 +117,12 @@ class TwitterlinkscraperPipeline:
         text = remove_special_characters(text) # remove punctuation and symbols
         text = remove_stopwords(text) # remove stopwords
         print(f"text is here {text}")
-        text_dict = convert(text)
-        #text.strip(' ') # strip whitespaces again?
-
-        return text_dict
+        text = detect_lang(text)
+        if text != "Not English":
+            text_dict = convert(text)
+            return text_dict
+        else:
+            return ""
     
     def process_item(self, item, spider):
         # print(f"this is it: {item['id'][0]}")
@@ -106,10 +131,38 @@ class TwitterlinkscraperPipeline:
         
         val = ([item['id'][0],self.stats.get_value('start_time')])
         self.curr.execute(sql, val)
-        if item['title'] != ""  and item['content'] != "":
-            sql2 = "INSERT INTO text_words (url_id, words) VALUES (%s,%s)"
-            val2 = ([item['id'][0],self.clean_text(f"{item['title']} {item['content']}")])
-            self.curr.execute(sql2, val2)
+        if item['title'] != ""  and item['content'] != "" and 'date' in item:
+            title = item['title']
+            words = item['content'].split()
+            if len(words) > 20:
+                new_string = ' '.join(words[:20]) + "...."
+            else:
+                new_string = ' '.join(words)
+            description = new_string
+
+            # dates = item['date']
+            # iso_date = parse(dates[0]).isoformat()
+            # print(f"dates = {dates}")
+            # iso_dates = []
+            # for date in dates:
+            #     try:
+            #         iso_date = parse(date).isoformat()
+            #         print(f" hello fuckers {iso_date}")
+            #         # iso_dates.append(iso_date)
+            #     except ValueError:
+            #         try:
+            #             iso_date = datetime.fromtimestamp(int(date))
+            #         except ValueError:
+            #             pass
+
+            # Get the most oldest date(most likely to be when first posted)
+            # most_recent_date = min(iso_dates)
+
+            text = self.clean_text(f"{item['title']} {item['content']}")
+            if text != "":
+                sql2 = "INSERT INTO text_words (url_id, title, description, words, date) VALUES (%s,%s,%s,%s,%s)"
+                val2 = ([item['id'][0],title,description,text, item['date'][0]])
+                self.curr.execute(sql2, val2)
             
         return item
     

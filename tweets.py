@@ -22,9 +22,132 @@ query = "Brexit"
 search = "has:links -has:images -has:videos -has:media -is:retweet lang:en "+query
 
 
-client = tweepy.Client(bearer_token=bearer_token, wait_on_rate_limit=True)
+client = tweepy.Client(bearer_token=bearer_token, consumer_key=api_key, consumer_secret=api_secret, access_token=access_token, access_token_secret=access_secret, wait_on_rate_limit=True)
 
+mycursor = mydb.cursor()
+# with open('mydata.json') as f:
+#     user_mapping = json.load(f)
+# user_mapping = {k: v for d in user_mapping for k, v in d.items()}
 
+# # print(user_mapping)
+# # print(data)
+# sql = "SELECT tweettest4.url_id, COUNT(*) as frequency FROM tweettest4 WHERE url_id IS NOT NULL GROUP BY tweettest4.url_id"
+# mycursor.execute(sql)
+# data2 = mycursor.fetchall()
+# # print(ascii(data2))
+# url_frequency_by_user = {}
+
+# for row in data2:
+#     url_id = row[0]
+#     frequency = 0
+#     # get the tweet_ids for the current URL
+#     tweet_ids = []
+#     mycursor.execute('SELECT tweet_id FROM tweettest4 WHERE url_id = %s', (url_id,))
+#     for tweet in mycursor:
+#         tweet_ids.append(tweet[0])
+#     # iterate over the tweet_ids and add the frequency to the appropriate user
+#     checked_users = []
+#     for tweet_id in tweet_ids:
+#         user_id = user_mapping.get(str(tweet_id), None) # get the user_id for the current tweet_id
+#         if user_id:
+#             if user_id not in checked_users:
+#                 frequency += 1
+#                 checked_users.append(user_id)
+#             # if url_id == 394107:
+#             #     print(user_id)
+#             # increment the frequency for the current URL and user
+#             # url_frequency_by_user.setdefault(user_id, {}).setdefault(url_id, 0)
+#             # url_frequency_by_user[user_id][url_id] += frequency
+#     # if url_id == 394107:
+#     #     print(f"{url_id} used {frequency} times")
+#     url_frequency_by_user[url_id] = frequency
+# # print(url_frequency_by_user)
+# # max_value = max(url_frequency_by_user.values())
+
+# for id,freq in url_frequency_by_user.items():
+#    #  print(f"{id} used {freq} times")
+#    sql = "UPDATE urltest SET frequency = %s WHERE url_id = %s"
+#    val = (freq, id)
+#    mycursor.execute(sql, val)
+# mydb.commit()
+
+# print(max_value)
+
+# close database connection
+# conn.close()
+
+# print the results
+# for user_id, url_frequencies in url_frequency_by_user.items():
+#     print(f'User {user_id} used the following URLs with their respective frequencies:')
+#     for url_id, frequency in url_frequencies.items():
+#         print(f'    URL {url_id}: {frequency} times')
+# new_dict = {k: v for d in data for k, v in d.items()}
+
+# # print(new_dict)
+# # Create a set to hold unique values
+# unique_values = set()
+
+# # Iterate over the values in the dictionary and add unique values to the set
+# for value in new_dict.values():
+#     unique_values.add(value)
+
+# # Convert the set to a list
+# unique_values_list = list(unique_values)
+# count = {}
+
+# for i in data2:
+    
+# print(len(unique_values_list))
+# tweet_ids = []
+# user_ids = []    
+# for dictionary in data:
+#     tweet_ids.extend(dictionary.keys())
+#     user_ids.extend(dictionary.values())
+
+# print(len(user_ids))
+# values = list(set(user_ids))
+# print(len(values))
+
+# sql = "SELECT tweet_id FROM tweettest4"
+# mycursor.execute(sql)
+# data = mycursor.fetchall()
+# tweet_ids = [i[0] for i in data]
+# print(tweet_ids)
+
+# user_ids = []
+# for i in range(0, len(tweet_ids), 100):
+#    group = tweet_ids[i:i+100]
+#    count = 0
+# #    print(len(group))
+#    print(f"group {i} to {i+100}")
+#    tweets = client.get_tweets(group,expansions='author_id')
+#    print(ascii(tweets))
+#    for tweet in tweets.data:
+#     # print(f"group {tweet.id}")
+#     # print(f"author {tweet.author_id}")
+#     user_ids.append({tweet.id:tweet.author_id})
+#     #   print(count)
+#     #   if tweet.author_id != None:
+#     #     print(f"group {group[count]}")
+#     #     print(f"author {tweet.author_id}")
+#     #     user_ids.append(tweet.author_id)
+#     count += 1
+      
+#    print("--------------------")
+# #    print(len(group))
+# #    print(len(user_ids))
+# # print(user_ids)
+# with open("mydata.json", "w") as final:
+#    json.dump(user_ids, final,indent =2)
+# tweets = client.get_tweets(tweet_ids[0:101],expansions='author_id')
+# print(ascii(tweets))
+# for tweet in tweets:
+#     print(ascii(tweet))
+
+# for response in tweepy.Paginator(client.get_tweets, tweet_ids,
+#                                     max_results=1000, limit=5):
+#     print(response.meta)
+    
 def check_if_in_db(tweet_id):
     mycursor = mydb.cursor()
     val = ([tweet_id])
@@ -41,11 +164,20 @@ def check_if_in_db(tweet_id):
 
     if len(data) == 0:
         return True
-    else:
+    else: 
         return False
 
-# Name and path of the file where you want the Tweets written to
-tweets = tweepy.Paginator(client.search_recent_tweets, query=search,tweet_fields=['entities','created_at','public_metrics'], max_results=100).flatten(limit=500000)
+def url_id(url):
+    mycursor = mydb.cursor()
+    val = ([url])
+    sql = "SELECT EXISTS(SELECT * from urltest WHERE url=%s)"
+    mycursor.execute(sql, val)
+    data = mycursor.fetchall()
+    print(data)
+    print(url)
+
+# # Name and path of the file where you want the Tweets written to
+tweets = tweepy.Paginator(client.search_recent_tweets, query=search,tweet_fields=['entities','created_at','public_metrics'], expansions='author_id', max_results=100).flatten(limit=500000)
 try:
     for tweet in tweets:
         if tweet.entities is not None and check_if_in_db(tweet.id):
@@ -73,11 +205,15 @@ try:
                 retweets = tweet.public_metrics['retweet_count']
                 impressions = tweet.public_metrics['impression_count']
                 tweet_id = tweet.id
-                print(tweet_id)
-                mycursor = mydb.cursor()
-                sql = "INSERT INTO tweets (url,title,description,created_at,tweet,query,retweets,impressions, tweet_id, hashtags) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
-                val = ([url,title,description,created_at,content,query,retweets,impressions,tweet_id, json.dumps(hashtags)])
-                mycursor.execute(sql, val)
+                user_id = tweet.author_id
+                print(tweet.author_id)
+                url_id(url)
+                # mycursor = mydb.cursor()
+                # sql = "INSERT INTO tweets (url,created_at,tweet,query,retweets,impressions, tweet_id,user_id, hashtags) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+                # val = ([url,created_at,content,query,retweets,impressions,tweet_id, user_id, json.dumps(hashtags)])
+                # # sql = "INSERT INTO tweets (url,title,description,created_at,tweet,query,retweets,impressions, tweet_id, hashtags) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+                # # val = ([url,title,description,created_at,content,query,retweets,impressions,tweet_id, json.dumps(hashtags)])
+                # mycursor.execute(sql, val)
                 mydb.commit()
 except tweepy.TweepyException:
     time.sleep(120)

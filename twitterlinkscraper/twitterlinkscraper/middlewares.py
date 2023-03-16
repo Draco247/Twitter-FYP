@@ -7,7 +7,7 @@ from scrapy import signals
 import random
 # useful for handling different item types with a single interface
 from itemadapter import is_item, ItemAdapter
-from twitterlinkscraper.twitterlinkscraper.settings import USERAGENTS
+from twitterlinkscraper.settings import USERAGENTS
 # from twitterlinkscraper.twitterlinkscraper.settings import USERAGENTS
 
 class ShowHeadersMiddleware:

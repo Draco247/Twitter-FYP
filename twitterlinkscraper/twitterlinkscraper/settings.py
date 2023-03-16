@@ -9,11 +9,11 @@
 
 BOT_NAME = 'twitterlinkscraper'
 
-# SPIDER_MODULES = ['twitterlinkscraper.spiders']
-# NEWSPIDER_MODULE = 'twitterlinkscraper.spiders'
+SPIDER_MODULES = ['twitterlinkscraper.spiders']
+NEWSPIDER_MODULE = 'twitterlinkscraper.spiders'
 
-SPIDER_MODULES = ['twitterlinkscraper.twitterlinkscraper.spiders']
-NEWSPIDER_MODULE = 'twitterlinkscraper.twitterlinkscraper.spiders'
+# SPIDER_MODULES = ['twitterlinkscraper.twitterlinkscraper.spiders']
+# NEWSPIDER_MODULE = 'twitterlinkscraper.twitterlinkscraper.spiders'
 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
@@ -27,12 +27,26 @@ ROBOTSTXT_OBEY = True
 # }
 PROXY_POOL_ENABLED = True
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
-#CONCURRENT_REQUESTS = 32
+CONCURRENT_REQUESTS = 50000
+CONCURRENT_REQUESTS_PER_DOMAIN=2
+SCHEDULER_PRIORITY_QUEUE = 'scrapy.pqueues.DownloaderAwarePriorityQueue'
+REACTOR_THREADPOOL_MAXSIZE = 30
+LOG_LEVEL = 'ERROR'
+# COOKIES_ENABLED = False
+RETRY_ENABLED = False
+DOWNLOAD_TIMEOUT = 30
+ROTATING_PROXY_LIST_PATH = 'C://Users//dan//Documents//GitHub//Twitter-FYP//http_proxies.txt'
+# PROXY
+# PROXY = 'http://127.0.0.1:8888/?noconnect'
+
+# SCRAPOXY
+# API_SCRAPOXY = 'http://127.0.0.1:8889/api'
+# API_SCRAPOXY_PASSWORD = 'ShadowSlash247'
 
 # Configure a delay for requests for the same website (default: 0)
 # See https://docs.scrapy.org/en/latest/topics/settings.html#download-delay
 # See also autothrottle settings and docs
-#DOWNLOAD_DELAY = 3
+DOWNLOAD_DELAY = 3
 # The download delay setting will honor only one of:
 #CONCURRENT_REQUESTS_PER_DOMAIN = 16
 #CONCURRENT_REQUESTS_PER_IP = 16
@@ -57,20 +71,22 @@ PROXY_POOL_ENABLED = True
 
 # Enable or disable downloader middlewares
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
-# DOWNLOADER_MIDDLEWARES = {
-#    'twitterlinkscraper.middlewares.RotateUserAgentMiddleware': 535,
-#    'twitterlinkscraper.middlewares.ShowHeadersMiddleware': 540,
-#    'twitterlinkscraper.middlewares.TwitterlinkscraperDownloaderMiddleware': 543,
-#    # 'scrapy_proxy_pool.middlewares.ProxyPoolMiddleware': 610,
-#    # 'scrapy_proxy_pool.middlewares.BanDetectionMiddleware': 620,
-# }
 DOWNLOADER_MIDDLEWARES = {
-   'twitterlinkscraper.twitterlinkscraper.middlewares.RotateUserAgentMiddleware': 535,
-   'twitterlinkscraper.twitterlinkscraper.middlewares.ShowHeadersMiddleware': 540,
-   'twitterlinkscraper.twitterlinkscraper.middlewares.TwitterlinkscraperDownloaderMiddleware': 543,
+   'twitterlinkscraper.middlewares.RotateUserAgentMiddleware': 535,
+   'twitterlinkscraper.middlewares.ShowHeadersMiddleware': 540,
+   'twitterlinkscraper.middlewares.TwitterlinkscraperDownloaderMiddleware': 543,
+   # 'rotating_proxies.middlewares.RotatingProxyMiddleware': 610,
+   # 'rotating_proxies.middlewares.BanDetectionMiddleware': 620,
    # 'scrapy_proxy_pool.middlewares.ProxyPoolMiddleware': 610,
    # 'scrapy_proxy_pool.middlewares.BanDetectionMiddleware': 620,
 }
+# DOWNLOADER_MIDDLEWARES = {
+#    'twitterlinkscraper.twitterlinkscraper.middlewares.RotateUserAgentMiddleware': 535,
+#    'twitterlinkscraper.twitterlinkscraper.middlewares.ShowHeadersMiddleware': 540,
+#    'twitterlinkscraper.twitterlinkscraper.middlewares.TwitterlinkscraperDownloaderMiddleware': 543,
+#    # 'scrapy_proxy_pool.middlewares.ProxyPoolMiddleware': 610,
+#    # 'scrapy_proxy_pool.middlewares.BanDetectionMiddleware': 620,
+# }
 
 # Enable or disable extensions
 # See https://docs.scrapy.org/en/latest/topics/extensions.html
@@ -80,12 +96,12 @@ DOWNLOADER_MIDDLEWARES = {
 
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
-# ITEM_PIPELINES = {
-#    'twitterlinkscraper.pipelines.TwitterlinkscraperPipeline': 300,
-# }
 ITEM_PIPELINES = {
-   'twitterlinkscraper.twitterlinkscraper.pipelines.TwitterlinkscraperPipeline': 300,
+   'twitterlinkscraper.pipelines.TwitterlinkscraperPipeline': 300,
 }
+# ITEM_PIPELINES = {
+#    'twitterlinkscraper.twitterlinkscraper.pipelines.TwitterlinkscraperPipeline': 300,
+# }
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://docs.scrapy.org/en/latest/topics/autothrottle.html
