@@ -13,7 +13,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import MinMaxScaler
 import numpy as np
-import gensim
+# import gensim
 from gensim.utils import simple_preprocess
 from gensim.models import CoherenceModel
 from gensim.corpora import Dictionary
@@ -63,6 +63,8 @@ def clean_text(text):
     # print("------------------")
     text = text.strip(' ')  # strip whitespaces
     text = text.lower()  # lowercase
+    text = text.encode('ascii', 'ignore')
+    text = text.decode()
 
     # text = stem_text(text) # stemming
     text = remove_special_characters(text)  # remove punctuation and symbols
@@ -114,6 +116,11 @@ def get_tweets(url_id, query):
         docs_list.append(" ".join(doc))
         count += 1
     # print(sentiment_scores)
+    compound_sum = 0
+    for i in sentiment_scores.values():
+        compound_sum += i['compound']
+
+    average_compound_score = compound_sum / len(sentiment_scores)
 
     cosine_similarities = calculate_tfidf_and_cosine_similarity(docs_list, query)
 
@@ -143,7 +150,7 @@ def get_tweets(url_id, query):
     # for i in range(10):
     #     return ranked_tweet_ids[i]
     topics = topic_modelling(tweets)
-    return topics,ranked_tweets[0:10]
+    return [topics,ranked_tweets[0:10],average_compound_score]
 
 def calculate_tfidf_and_cosine_similarity(docs_list, query):
     # initialize the vectorizer and calculate the tfidf of every document(tweet)
@@ -184,9 +191,17 @@ def topic_modelling(tweets):
     # Print the top 10 words for each of the 5 topics
     topics = {}
     for topic_id in range(5):
-        topics[topic_id] = " ".join(word[0] for word in lda_model.show_topic(topic_id, topn=10))
+        for word in lda_model.show_topic(topic_id, topn=10):
+            # print(word)
+            if word[0] in topics:
+                topics[word[0]] = topics.get(word[0])+1
+            else:
+                topics[word[0]] = 1
+        # topics[topic_id] = " ".join(word[0] for word in lda_model.show_topic(topic_id, topn=10))
         # return (f'Topic {topic_id}: {" ".join(word[0] for word in lda_model.show_topic(topic_id, topn=10))}')
-    return topics
+    # print(topics)
+    topics_vals = [{'text': key, 'value': value} for key, value in topics.items()]
+    return topics_vals
 
 
-print(get_tweets(392919, 'turkey'))
+# print(get_tweets(392919, 'turkey'))

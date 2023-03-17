@@ -8,6 +8,7 @@ import { TwitterTweetEmbed } from 'react-twitter-embed';
 import Tweets from '../tweets/tweets'
 import { ListGroup, Card } from 'react-bootstrap';
 import Pagination from '../Pagination'
+import TweetPagination from '../TweetPagination'
 import Offcanvas from 'react-bootstrap/Offcanvas';
 import Button from 'react-bootstrap/Button';
 import ReactWordcloud from 'react-wordcloud';
@@ -88,6 +89,8 @@ function ResultsPage(...props) {
   const [currenturl, setCurrentUrl] = useState('')
   const [currentPage, setCurrentPage] = useState(1);
   const [currenttweets, setCurrenttweets] = useState([]);
+  const [currenttopics, setCurrenttopics] = useState([]);
+  const [currentsentiment, setCurrentsentiment] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentTab, setCurrentTab] = useState("All");
   // let [tweets, setTweets] = useState([]);
@@ -105,7 +108,13 @@ function ResultsPage(...props) {
    const indexOfLastResult = currentPage * resultsPerPage;
    const indexOfFirstResult = indexOfLastResult - resultsPerPage;
    const currentResults = results.slice(indexOfFirstResult, indexOfLastResult);
- 
+
+   const [currentTweetPage, setCurrentTweetPage] = useState(1);
+   const tweetsPerPage = 1;
+   const indexOfLastTweet = currentPage * tweetsPerPage;
+   const indexOfFirstTweet = indexOfLastTweet - tweetsPerPage;
+   const currentTweets = currenttweets?.slice(indexOfFirstTweet, indexOfLastTweet);
+
    // Change the current page
   //  const handlePageChange = (pageNumber) => {
   //    setCurrentPage(pageNumber);
@@ -122,8 +131,9 @@ function ResultsPage(...props) {
     obj = await res.json()
     // console.log(obj)
     // setTweets(obj)
-    
-    setCurrenttweets(obj)
+    setCurrenttopics(obj[0])
+    setCurrenttweets(obj[1])
+    setCurrentsentiment(obj[2])
     handleShow();
     
   };
@@ -131,6 +141,8 @@ function ResultsPage(...props) {
   useEffect(() => {
     // fetchData();
     console.log(currenttweets)
+    console.log(currenttopics)
+    console.log(currentsentiment)
     console.log(show)
     // handleShow();
   }, [currenttweets]);
@@ -160,9 +172,7 @@ async function fetchResults() {
     console.log(results)
     // handleShow();
   }, [results]);
-  
 
-  
 
   return (
     <React.Fragment>
@@ -174,32 +184,32 @@ async function fetchResults() {
             <SearchBar />
           </div>
         </div>
-        <div className="mt-8">
-          <div className="border-b border-gray-300">
-            <nav className="flex justify-between">
-              <button
-                className={`${
-                  currentTab === "All"
-                    ? "bg-gray-100 text-gray-900"
-                    : "text-gray-700"
-                } py-2 px-4 font-semibold`}
-                onClick={() => handleTabClick("All")}
-              >
-                All
-              </button>
-              <button
-                className={`${
-                  currentTab === "Videos"
-                    ? "bg-gray-100 text-gray-900"
-                    : "text-gray-700"
-                } py-2 px-4 font-semibold`}
-                onClick={() => handleTabClick("Videos")}
-              >
-                Videos
-              </button>
-            </nav>
-          </div>
-        </div>
+        {/*<div className="mt-8">*/}
+        {/*  <div className="border-b border-gray-300">*/}
+        {/*    <nav className="flex justify-between">*/}
+        {/*      <button*/}
+        {/*        className={`${*/}
+        {/*          currentTab === "All"*/}
+        {/*            ? "bg-gray-100 text-gray-900"*/}
+        {/*            : "text-gray-700"*/}
+        {/*        } py-2 px-4 font-semibold`}*/}
+        {/*        onClick={() => handleTabClick("All")}*/}
+        {/*      >*/}
+        {/*        All*/}
+        {/*      </button>*/}
+        {/*      <button*/}
+        {/*        className={`${*/}
+        {/*          currentTab === "Videos"*/}
+        {/*            ? "bg-gray-100 text-gray-900"*/}
+        {/*            : "text-gray-700"*/}
+        {/*        } py-2 px-4 font-semibold`}*/}
+        {/*        onClick={() => handleTabClick("Videos")}*/}
+        {/*      >*/}
+        {/*        Videos*/}
+        {/*      </button>*/}
+        {/*    </nav>*/}
+        {/*  </div>*/}
+        {/*</div>*/}
         {loading && (       
             <div role="status">
               {/* <ReactWordcloud words={words} /> */}
@@ -213,9 +223,25 @@ async function fetchResults() {
         {!loading && (
         
         <div className="flex flex-wrap">
-          {currentTab === "All" && (
+          {/*{currentTab === "All" && (*/}
+          {/*  <div className="w-2/3 p-4">*/}
+          {/*    */}
+          {/*    {currentResults?.map(result => (*/}
+          {/*      <div key={result.id} className="bg-white rounded-lg shadow-lg mb-4 p-4">*/}
+          {/*        <a href={result.url} className="text-blue-600 font-bold hover:underline">{result.url}</a>*/}
+          {/*        <div className="flex justify-between items-center">*/}
+          {/*          <h2 className="text-lg font-bold mb-2"><a href={result.url}>{result.title}</a></h2>*/}
+          {/*          <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-4" onClick={() => handleViewClick(result.id)}>*/}
+          {/*              Show Tweets*/}
+          {/*          </button>*/}
+          {/*        </div>*/}
+          {/*        <p className="text-gray-700 text-base">{result.description}</p>*/}
+          {/*      </div>*/}
+          {/*    ))}*/}
+          {/*  </div>*/}
+          {/*  )}*/}
+          {/*  {currentTab === "Videos" && <VideosTab />}*/}
             <div className="w-2/3 p-4">
-              
               {currentResults?.map(result => (
                 <div key={result.id} className="bg-white rounded-lg shadow-lg mb-4 p-4">
                   <a href={result.url} className="text-blue-600 font-bold hover:underline">{result.url}</a>
@@ -229,18 +255,33 @@ async function fetchResults() {
                 </div>
               ))}
             </div>
-            )}
-            {currentTab === "Videos" && <VideosTab />}
             <div className="w-1/3 p-4">
               {show && (
-                <div className="bg-white rounded-lg shadow-lg mb-4 p-4">
-                  <ul className="list-disc list-inside">
-                    {currenttweets?.map(tweet => (
-                      <li key={tweet.id}>
-                        <Tweets tweet={tweet}/>
-                      </li>
-                    ))}
-                  </ul>
+                  <div>
+                      {currenttopics && (
+                    <div style={{ height: 400, width: 600 }}>
+                      <ReactWordcloud
+                        words={currenttopics}
+                        options={{
+                          fontSizes: [10, 50],
+                          rotations: 0,
+                          enableOptimizations: true
+                        }}
+                      />
+                    </div>
+                  )}
+                  </div>
+              )}
+                {show && (
+                <div className="bg-white rounded-lg shadow-lg mb-4 p-4" style={{height: "800px", overflowY: "scroll"}}>
+                    <ul className="divide-y divide-gray-300">
+                        {currenttweets?.map(tweet => (
+                            <li className="py-4" key={tweet.id}>
+                                <Tweets tweet={tweet}/>
+                            </li>
+                        ))}
+                    </ul>
+
                 </div>
               )}
             </div>

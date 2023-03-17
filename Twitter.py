@@ -92,12 +92,12 @@ def get_results(query):
         list.append(i[1])
         dates.append({i[0]: i[2]})
         testresults[i[0]] = {"words": i[1], "date": i[2]}
-
+    # print(testresults)
     end_time = time.time()
     elapsed_time = end_time - start_time
 
     print(f"Test 1 - Elapsed time: {elapsed_time} seconds")
-    # print(testresults)
+    # print(testresults.keys())
     terms_list = []
     # for doc in list:
     #     doc = json.loads(doc)
@@ -133,6 +133,7 @@ def get_results(query):
     #calculate cosine similarities for each document(webpage) in relation to the query
     start_time = time.time()
     cosine_similarities = cosine_similarity(tfidf, query_tfidf)
+    print(cosine_similarities)
     end_time = time.time()
     elapsed_time = end_time - start_time
 
@@ -140,15 +141,15 @@ def get_results(query):
 
     # print the cosine similarities
     # app.logger.info(cosine_similarities)
-    # sorted_indices = cosine_similarities.argsort(axis=0)[::-1].flatten()
-    # sorted_indices = np.argsort(cosine_similarities, axis=0)[::-1].flatten()
-    # # sorted_indices = cosine_similarities.flatten()
-    # print(sorted_indices)
-    # # app.logger.info(sorted_indices)
-    # sorted_urls = []
-    # for idx in sorted_indices:
-    #     # app.logger.info(f"hello :{ids[idx]}, CS: {cosine_similarities[idx]}")
-    #     sorted_urls.append(ids[idx])
+    sorted_indices = cosine_similarities.argsort(axis=0)[::-1].flatten()
+    sorted_indices = np.argsort(cosine_similarities, axis=0)[::-1].flatten()
+    # sorted_indices = cosine_similarities.flatten()
+    print(sorted_indices)
+    # app.logger.info(sorted_indices)
+    sorted_urls = []
+    for idx in sorted_indices:
+        # app.logger.info(f"hello :{ids[idx]}, CS: {cosine_similarities[idx]}")
+        sorted_urls.append(ids[idx])
     end_time = time.time()
     elapsed_time = end_time - start_time
 
@@ -156,12 +157,12 @@ def get_results(query):
 
     # app.logger.info(sorted_urls)
     start_time = time.time()
-    # in_params = ','.join(['%s'] * len(sorted_urls))
+    in_params = ','.join(['%s'] * len(sorted_urls))
     mycursor2 = mydb.cursor(buffered=True)
-    sql = "SELECT url_id ,url, title, description,frequency FROM urltest"
-    # sql = "SELECT url_id ,url, title, description,frequency FROM urltest WHERE url_id IN (%s)" % in_params
-    # mycursor2.execute(sql, sorted_urls)
-    mycursor.execute(sql)
+    # sql = "SELECT url_id ,url, title, description,frequency FROM urltest"
+    sql = "SELECT url_id ,url, title, description,frequency FROM urltest WHERE url_id IN (%s)" % in_params
+    mycursor2.execute(sql, sorted_urls)
+    # mycursor2.execute(sql)
     data = mycursor2.fetchall()
     end_time = time.time()
     elapsed_time = end_time - start_time
@@ -178,29 +179,30 @@ def rank_webpages(cosine_similarities, data, dates, testresults, w1=0.8, w2=0.5)
     sorted_scores = []
     now = datetime.now()
     # print(cosine_similarities)
-    # date_set = set()
-    # for d in dates:
-    #     date_set.update(d.keys())
+    date_set = set()
+    for d in dates:
+        date_set.update(d.keys())
 
     #iterate through every url that is somewhat related to the query and rank them
-    for idx, i in enumerate(data):
+    for idx ,i in enumerate(data):
         if i[2] != "N/A" and i[3] != "N/A" and cosine_similarities[idx] > 0.1:
             url = i[1]
             
             freq = i[4]
-            approx_date = testresults[i[0]]['date']
-            # if i[0] in date_set:
-            #     approx_date = next((d[i[0]] for d in dates if i[0] in d), None)
+            # print(testresults.get(i[0]))
+            # approx_date = testresults[i[0]]['date']
+            if i[0] in date_set:
+                approx_date = next((d[i[0]] for d in dates if i[0] in d), None)
 
-            time_diff = (now - approx_date).days
+                time_diff = (now - approx_date).days
 
-            # the older a result is the lower its score will be 
-            decayed_freq = freq / (1 + time_diff)
-            # app.logger.info(cosine_similarities[idx][0])
-            score = w1 * cosine_similarities[idx] + w2 * decayed_freq
-            sorted_scores.append(
-                {"id": i[0], "url": i[1], "title": i[2], "description": ' '.join(i[3].split()[:20]) + '...',
-                "date": approx_date, "frequency": i[4], "score": score[0]})
+                # the older a result is the lower its score will be
+                decayed_freq = freq / (1 + time_diff)
+                # app.logger.info(cosine_similarities[idx][0])
+                score = w1 * cosine_similarities[idx] + w2 * decayed_freq
+                sorted_scores.append(
+                    {"id": i[0], "url": i[1], "title": i[2], "description": ' '.join(i[3].split()[:20]) + '...',
+                    "date": approx_date, "frequency": i[4], "score": score[0]})
 
             # print(score)
         # sorted_scores.sort(reverse=True)
