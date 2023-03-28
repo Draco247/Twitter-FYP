@@ -51,149 +51,110 @@ def search():
 
 @app.route('/results')
 def get_results(query=None):
-    try:
+    #check if query has already been searched before
+    sql = "SELECT EXISTS(SELECT * from saved_result_queries WHERE search_query = %s)"
+    val = ([query])
+    mycursor = mydb.cursor(buffered=True)
+    mycursor.execute(sql, val)
+    mycursor.close()
+    exists = mycursor.fetchone()[0]
 
-        #check if query has already been searched before
-        sql = "SELECT EXISTS(SELECT * from saved_result_queries WHERE search_query = %s)"
-        val = ([query])
+    # if query already has stored results then return them
+    if exists == 1:
+        mycursor = mydb.cursor(buffered=True)
+        table_name = "result_" + query.replace(" ", "_").lower()
+        sql = "SELECT * FROM {table_name}".format(table_name=table_name)
+        mycursor.execute(sql)
+        data = mycursor.fetchall()
+        final_results = [dict(
+            zip(("id", "url", "title", "description", "date", "frequency", "cosine_similarity", "score", "ranking"), x))
+            for x in data]
+        final_results = sorted(final_results, key=lambda x: x["ranking"])
+        mycursor.close()
+        return final_results
+    
+    # otherwise need to find relevant results
+    else:
+        table_name = "result_" + query.replace(" ", "_").lower()
+        sql = "CREATE TABLE {table_name} (url_id INT PRIMARY KEY,url TEXT,title TEXT,description TEXT,date datetime,frequency INT,cosine_similarity FLOAT,score FLOAT,ranking INT)".format(
+            table_name=table_name)
+
+        mycursor = mydb.cursor(buffered=True)
+
+        mycursor.execute(sql)
+
+        mydb.commit()
+
+        mycursor.close()
+        
+        mycursor = mydb.cursor(buffered=True)
+        url_ids = []
+
+        query_words = query.split()
+        for word in query_words:
+            sql = "SELECT url_ids FROM inverted_index WHERE word = %s"
+            val = (word,)
+            mycursor.execute(sql, val)
+            result = mycursor.fetchone()
+            mycursor.close()
+            if result is not None:
+                url_ids_str = result[0]
+                url_ids = url_ids_str.split(',')
+        url_ids = list(dict.fromkeys(url_ids))
+
+        in_params = ','.join(['%s'] * len(url_ids))
+        sql = "SELECT url_id,words,date FROM text_words WHERE url_id IN (%s)" % in_params
+        mycursor.execute(sql, url_ids)
+        data = mycursor.fetchall()
+
+        mycursor.close()
+        ids = []
+        data_dict = {}
+        for i in data:
+            ids.append(i[0])
+            data_dict[i[0]] = {"words": i[1], "date": i[2]}
+
+
+        terms_list = []
+
+        for key, value in data_dict.items():
+            doc = json.loads(value['words'])
+            terms_list.append(" ".join([term for term in doc.keys() for i in range(doc[term])]))
+
+
+        #create TF-IDF vectors for terms list and query
+        vectorizer = TfidfVectorizer()
+
+        tfidf = vectorizer.fit_transform(terms_list)
+        
+        query_tfidf = vectorizer.transform([query])
+
+        # calculate cosine similarities for each document(webpage) in relation to the query
+        cosine_similarities = cosine_similarity(tfidf, query_tfidf)
+        
+        sorted_indices = np.argsort(cosine_similarities, axis=0)[::-1].flatten()
+        sorted_urls = []
+        for idx in sorted_indices:
+            sorted_urls.append(ids[idx])
+
+        in_params = ','.join(['%s'] * len(sorted_urls))
+        mycursor = mydb.cursor(buffered=True)
+        sql = "SELECT url_id ,url, title, description,frequency FROM urltest WHERE url_id IN (%s)" % in_params
+        mycursor.execute(sql, sorted_urls)
+        data = mycursor.fetchall()
+        mycursor.close()
+
+        rank = rank_webpages(cosine_similarities, data, data_dict)
+
+        sql = "INSERT INTO saved_result_queries (search_query) VALUES (%s)"
+        val = ([query.lower()])
         mycursor = mydb.cursor(buffered=True)
         mycursor.execute(sql, val)
+        mydb.commit()
         mycursor.close()
-        exists = mycursor.fetchone()[0]
-
-        # if query already has stored results then return them
-        if exists == 1:
-            try:
-                mycursor = mydb.cursor(buffered=True)
-                table_name = "result_" + query.replace(" ", "_").lower()
-                sql = "SELECT * FROM {table_name}".format(table_name=table_name)
-                mycursor.execute(sql)
-                data = mycursor.fetchall()
-                final_results = [dict(
-                    zip(("id", "url", "title", "description", "date", "frequency", "cosine_similarity", "score", "ranking"), x))
-                    for x in data]
-                final_results = sorted(final_results, key=lambda x: x["ranking"])
-                mycursor.close()
-                return final_results
-            except mysql.connector.Error as err:
-                # Handle MySQL errors here
-                print("MySQL error: ", err)
-                return "An error occurred while executing the SQL query", 500
-
-            except Exception as e:
-                # Handle any other unhandled exceptions here
-                print("An error occurred: ", str(e))
-                return "An error occurred while processing the request", 500
-        
-        # otherwise need to find relevant results
-        else:
-            mycursor = mydb.cursor(buffered=True)
-            url_ids = []
-
-            query_words = query.split()
-            for word in query_words:
-                sql = "SELECT url_ids FROM inverted_index WHERE word = %s"
-                val = (word,)
-                mycursor.execute(sql, val)
-                result = mycursor.fetchone()
-                mycursor.close()
-                if result is None:
-                    return "query not in inverted_index",400
-                
-                else:
-                    url_ids_str = result[0]
-                    url_ids = url_ids_str.split(',')
-
-            url_ids = list(dict.fromkeys(url_ids))
-
-            if len(url_ids) > 0:
-                table_name = "result_" + query.replace(" ", "_").lower()
-                sql = "CREATE TABLE IF NOT EXISTS {table_name} (url_id INT PRIMARY KEY,url TEXT,title TEXT,description TEXT,date datetime,frequency INT,cosine_similarity FLOAT,score FLOAT,ranking INT)".format(
-                    table_name=table_name)
-
-                mycursor = mydb.cursor(buffered=True)
-
-                # need to check if table was created successfully
-                try:
-                    mycursor.execute(sql)
-                    mydb.commit()
-
-                except Exception as e:
-                    mydb.rollback()
-                    raise Exception(f"Error creating table {table_name}: {e}")
-
-                mycursor.close()
-
-                in_params = ','.join(['%s'] * len(url_ids))
-                sql = "SELECT url_id,words,date FROM text_words WHERE url_id IN (%s)" % in_params
-                mycursor.execute(sql, url_ids)
-                data = mycursor.fetchall()
-
-                mycursor.close()
-                ids = []
-                data_dict = {}
-                for i in data:
-                    ids.append(i[0])
-                    data_dict[i[0]] = {"words": i[1], "date": i[2]}
-
-
-                terms_list = []
-
-                for key, value in data_dict.items():
-                    doc = json.loads(value['words'])
-                    terms_list.append(" ".join([term for term in doc.keys() for i in range(doc[term])]))
-
-
-                #create TF-IDF vectors for terms list and query
-                vectorizer = TfidfVectorizer()
-
-                tfidf = vectorizer.fit_transform(terms_list)
-                
-                query_tfidf = vectorizer.transform([query])
-
-                # calculate cosine similarities for each document(webpage) in relation to the query
-                cosine_similarities = cosine_similarity(tfidf, query_tfidf)
-                
-                sorted_indices = np.argsort(cosine_similarities, axis=0)[::-1].flatten()
-                sorted_urls = []
-                for idx in sorted_indices:
-                    sorted_urls.append(ids[idx])
-
-                in_params = ','.join(['%s'] * len(sorted_urls))
-                mycursor = mydb.cursor(buffered=True)
-                sql = "SELECT url_id ,url, title, description,frequency FROM urltest WHERE url_id IN (%s)" % in_params
-                mycursor.execute(sql, sorted_urls)
-                data = mycursor.fetchall()
-
-                if len(data) > 0:
-                    return "No results", 400
-                
-                mycursor.close()
-
-                rank = rank_webpages(cosine_similarities, data, data_dict)
-
-                sql = "INSERT INTO saved_result_queries (search_query) VALUES (%s)"
-                val = ([query.lower()])
-                mycursor = mydb.cursor(buffered=True)
-                mycursor.execute(sql, val)
-                mydb.commit()
-                mycursor.close()
-                final_results = remove_duplicates(rank)
-                task = save_to_db.delay(final_results, table_name)
-                return final_results
-            
-            else:
-                return "No results",400
-        
-    except mysql.connector.Error as err:
-        # Handle MySQL errors here
-        app.logger.info("MySQL error: ", err)
-        return "An error occurred while executing the SQL query", 500
-
-    except Exception as e:
-        # Handle any other unhandled exceptions here
-        print("An error occurred: ", str(e))
-        return "An error occurred while processing the request", 500
+        final_results = remove_duplicates(rank)
+        task = save_to_db.delay(final_results, table_name)
+        return final_results
 
 
 @celery.task()
