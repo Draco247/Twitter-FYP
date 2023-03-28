@@ -152,15 +152,9 @@ def check_if_in_db(tweet_id):
     mycursor = mydb.cursor()
     val = ([tweet_id])
     sql = "SELECT * FROM tweets WHERE tweet_id = %s"
-    # mycursor.execute("SELECT ame FROM workers WHERE symbol=%s", (name,))
-    # val = (url, created_at
     mycursor.execute(sql, val)
-    # print(mycursor.statement)
-    # print(mycurs
-
     data = mycursor.fetchall()
-
-    # print(data)
+    mycursor.close()
 
     if len(data) == 0:
         return True
@@ -173,10 +167,18 @@ def url_id(url):
     sql = "SELECT EXISTS(SELECT * from urltest WHERE url=%s)"
     mycursor.execute(sql, val)
     data = mycursor.fetchall()
-    print(data)
-    print(url)
+    mycursor.close()
+    if data == 0:
+        mycursor = mydb.cursor()
+        sql = "INSERT INTO urltest (url) VALUES (%s)"
+        val = ([url])
+        mycursor.execute(sql, val)
+        mydb.commit()
+    else:
+        sql = "UPDATE "
 
-# # Name and path of the file where you want the Tweets written to
+    return data
+
 tweets = tweepy.Paginator(client.search_recent_tweets, query=search,tweet_fields=['entities','created_at','public_metrics'], expansions='author_id', max_results=100).flatten(limit=500000)
 try:
     for tweet in tweets:
