@@ -15,6 +15,7 @@ const DropdownButton = ({ onSelectOption }) => {
 
   return (
     <Dropdown options={options} placeholder="Ranking Option" onChange={handleSelect} />
+
   );
 };
 

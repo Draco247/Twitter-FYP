@@ -35,7 +35,7 @@ LOG_LEVEL = 'ERROR'
 # COOKIES_ENABLED = False
 RETRY_ENABLED = False
 DOWNLOAD_TIMEOUT = 30
-ROTATING_PROXY_LIST_PATH = 'C://Users//dan//Documents//GitHub//Twitter-FYP//http_proxies.txt'
+ROTATING_PROXY_LIST_PATH = '/http_proxies.txt'
 # PROXY
 # PROXY = 'http://127.0.0.1:8888/?noconnect'
 
