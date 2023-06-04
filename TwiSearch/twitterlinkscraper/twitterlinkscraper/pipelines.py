@@ -24,10 +24,10 @@ class TwitterlinkscraperPipeline:
 
     def __init__(self, stats):
         self.conn = mysql.connector.connect(
-            host="localhost",
-            user="root",
-            password="ShadowSlash247",
-            database="mydatabase"
+            host="placeholder",
+            user="placeholder",
+            password="placeholder",
+            database="placeholder"
             )
         self.stats = stats
         
@@ -59,10 +59,6 @@ class TwitterlinkscraperPipeline:
             tokens = tokenize_text(text)
             pattern = re.compile('[{}]'.format(re.escape(characters)))
             return ' '.join(filter(None, [pattern.sub('', t) for t in tokens]))
-
-        def stem_text(text, stemmer=default_stemmer):
-            tokens = tokenize_text(text)
-            return ' '.join([stemmer.stem(t) for t in tokens])
 
         def remove_stopwords(text, stop_words=default_stopwords):
             tokens = [w for w in tokenize_text(text) if w not in stop_words]

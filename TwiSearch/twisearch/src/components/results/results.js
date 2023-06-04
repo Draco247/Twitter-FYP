@@ -21,6 +21,8 @@ function ResultsPage() {
   const [currenttweets, setCurrenttweets] = useState([]);
   const [currenttopics, setCurrenttopics] = useState([]);
   const [currenthashtags, setCurrentHashtags] = useState([]);
+  const [currentsentiment, setCurrentSentiment] = useState(0)
+  const [numtweets, setNumtweets] = useState(0)
   const [loading, setLoading] = useState(true);
   const [resultsPerPage] = useState(10);
   const [show, setShow] = useState(false);
@@ -45,17 +47,24 @@ function ResultsPage() {
 async function handleViewClick(id){
   // Send a request to the backend with the ID of the clicked result
   let obj;
-  const res = await fetch(`http://127.0.0.1:5000/tweets?id=${id}&query=${searchquery}`)
-  obj = await res.json()
-  setCurrenttopics(obj[0])
-  setCurrenttweets(obj[1])
-  setCurrentHashtags(obj[3])
-  handleShow();
+  try{
+    const res = await fetch(`http://127.0.0.1:5000/tweets?id=${id}&query=${searchquery}`)
+    obj = await res.json()
+    setCurrenttopics(obj[0])
+    setCurrenttweets(obj[1])
+    setCurrentHashtags(obj[3])
+    setCurrentSentiment(obj[2])
+    setNumtweets(obj[4])
+    handleShow();
+  } catch (error) {
+    console.log(error);
+  }
   
 };
 
-useEffect(() => {
-}, [currenttweets]);
+// useEffect(() => {
+//   console.log(currentsentiment)
+// }, [currenttweets]);
 
 
 
@@ -65,6 +74,7 @@ async function fetchResults() {
       handleClose()
       setCurrenttweets([])
       setCurrenttopics([])
+      setNumtweets(0)
       setLoading(true);
       try {
         const response = await fetch(`http://127.0.0.1:5000/search?query=${query}`);
@@ -170,7 +180,7 @@ async function fetchResults() {
               <div className="w-1/3 p-4">
                 {show && (
                     <div className="flex flex-col items-center justify-center min-h-screen py-2">
-                      <Sidebar currenthashtags = {currenthashtags} setShow = {setShow} show={show} currenttweets={currenttweets} currenttopics={currenttopics} />
+                      <Sidebar  numtweets={numtweets} currentsentiment={currentsentiment} currenthashtags = {currenthashtags} setShow = {setShow} show={show} currenttweets={currenttweets} currenttopics={currenttopics} />
                   </div>
                 )}
               </div>

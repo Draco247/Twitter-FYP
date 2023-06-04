@@ -20,14 +20,14 @@ class LinkscraperSpider(Spider):
 
    
     conn = mysql.connector.connect(
-    host="localhost",
-    user="root",
-    password="ShadowSlash247",
-    database="mydatabase"
+    host="placeholder",
+    user="placeholder",
+    password="placeholder",
+    database="placeholder"
     )
     curr = conn.cursor()
     # get all links to be crawled
-    curr.execute("SELECT url_id,url FROM urltest")
+    curr.execute("SELECT url_id,url FROM urls")
 
     data = curr.fetchall()
     start_urls = []
