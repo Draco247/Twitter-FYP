@@ -10,14 +10,15 @@ import importlib
 from sklearn.metrics.pairwise import cosine_similarity
 import urllib.parse
 from celery import Celery
+import tweet_analysis as tweets
 
-tweets = importlib.import_module("tweet_analysis")
+# tweets = importlib.import_module("tweet_analysis")
 
 mydb = mysql.connector.connect(
-    host="placeholder",
-    user="placeholder",
-    password="placeholder",
-    database="placeholder"
+    host="localhost",
+    user="root",
+    password="ShadowSlash247",
+    database="mydatabase"
 )
 
 app = Flask(__name__)
@@ -265,5 +266,5 @@ def get_url_tweets():
     return url_tweets
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(debug=True)

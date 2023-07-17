@@ -81,7 +81,7 @@ def get_tweets(url_id, query):
     mycursor = mydb.cursor()
 
     # get all tweets that use the specified url
-    sql = "SELECT tweet_id, tweet, created_at, retweets, impressions, hashtags FROM tweets WHERE url_id = (%s)"
+    sql = "SELECT tweet_id, tweet, created_at, retweets, impressions, hashtags FROM tweettest4 WHERE url_id = (%s)"
     mycursor.execute(sql, (url_id,))
     data = mycursor.fetchall()
     # print(ascii(data))
