@@ -4,14 +4,18 @@
     right: 0;
     bottom: 0;
     max-width: 500px;
-    background-color: #504747;
+    background-color: #666060;
     overflow-y: auto;
   }
 
-  li {
-    background-color: #f8f8f8;
-    padding: 100px;
-    margin-bottom: 10px;
-    border-radius: 5px;
-    margin-left: 10px;
-  }
+  /* li { */
+    /* background-color: #db0b0b; */
+    /* padding: 100px; */
+    /* margin-bottom: 10px; */
+    /* border-radius: 5px; */
+    /* margin-left: 10px; */
+  /* } */
+
+  /* .divide-y divide-gray-300{
+    background-color: aquamarine;
+  } */

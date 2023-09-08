@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Switch,Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes,Route } from 'react-router-dom';
 import SearchPage from './components/searchpage/search';
 import ResultsPage from './components/results/results';
 

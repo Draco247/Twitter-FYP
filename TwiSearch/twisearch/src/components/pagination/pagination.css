@@ -1,0 +1,40 @@
+.pagination {
+    list-style: none;
+    display: flex;
+    margin: 0;
+    padding: 0;
+    /* background-color: aqua; */
+  }
+  
+  .page-item {
+    margin-right: 1rem;
+    /* background-color: blueviolet; */
+    padding: 0.5rem;
+  }
+  
+  .page-link {
+    display: block;
+    padding: 0.5rem;
+    color: #333;
+    text-decoration: none;
+  }
+  
+  .active .page-link {
+    background-color: #007bff;
+    color: #fff;
+  }
+  
+  .active .page-link:hover {
+    background-color: #007bff;
+  }
+  
+  .page-link:hover {
+    background-color: #f2f2f2;
+  }
+  
+  @media (max-width: 576px) {
+    .page-item {
+      margin-right: 0.5rem;
+    }
+  }
+  
